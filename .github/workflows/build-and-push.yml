@@ -19,8 +19,14 @@ jobs:
           password: ${{ secrets.GH_PAT }}
           registry: ghcr.io
      
-      - name: Build Docker Image
-        run: docker build . --tag ghcr.io/nuwas/nuwas-apache-spark:latest
+      #- name: Build Docker Image
+      #  run: docker build . --tag ghcr.io/nuwas/nuwas-apache-spark:latest
+      #    docker buildx create --use
+
+      - name: Build and Push Multi-Arch Docker Image
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --tag ghcr.io/nuwas/nuwas-apache-spark:latest .  
       
       - name: Push Docker Image
         run: docker push ghcr.io/nuwas/nuwas-apache-spark:latest
