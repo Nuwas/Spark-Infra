@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-workers
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark-worker
+    spec:
+      containers:
+        - name: spark-worker
+          image: ghcr.io/nuwas/nuwas-apache-spark:latest
+          ports:
+            - containerPort: 8080
+            - containerPort: 7000
+          env:
+            - name: SPARK_MASTER
+              value: "spark://spark-master:7077"
+            - name: SPARK_WORKER_CORES
+              value: "1"
+            - name: SPARK_WORKER_MEMORY
+              value: "1G"
+            - name: SPARK_DRIVER_MEMORY
+              value: "1G"
+            - name: SPARK_EXECUTOR_MEMORY
+              value: "1G"
+            - name: SPARK_WORKLOAD
+              value: "worker"
+            - name: SPARK_LOCAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name  # Use pod name as IP identifier
+          volumeMounts:
+            - name: apps-volume
+              mountPath: /opt/spark-apps
+            - name: data-volume
+              mountPath: /opt/spark-data
+      volumes:
+        - name: apps-volume
+          hostPath:
+            path: /path/to/apps
+        - name: data-volume
+          hostPath:
+            path: /path/to/data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-worker
+spec:
+  ports:
+    - name: web-ui
+      port: 8080
+      targetPort: 8080
+    - name: spark-worker
+      port: 7000
+      targetPort: 7000
+  selector:
+    app: spark-worker
+  type: LoadBalancer

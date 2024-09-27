@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-master
+  template:
+    metadata:
+      labels:
+        app: spark-master
+    spec:
+      containers:
+        - name: spark-master
+          image: ghcr.io/nuwas/nuwas-apache-spark:latest
+          ports:
+            - containerPort: 8080
+            - containerPort: 7077
+          env:
+            - name: SPARK_LOCAL_IP
+              value: "spark-master"
+            - name: SPARK_WORKLOAD
+              value: "master"
+          volumeMounts:
+            - name: apps-volume
+              mountPath: /opt/spark-apps
+            - name: data-volume
+              mountPath: /opt/spark-data
+      volumes:
+        - name: apps-volume
+          hostPath:
+            path: /path/to/apps
+        - name: data-volume
+          hostPath:
+            path: /path/to/data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master
+spec:
+  ports:
+    - name: web-ui
+      port: 8080
+      targetPort: 8080
+    - name: spark-master
+      port: 7077
+      targetPort: 7077
+  selector:
+    app: spark-master
+  type: LoadBalancer
